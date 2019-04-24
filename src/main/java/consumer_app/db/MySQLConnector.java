@@ -1,5 +1,7 @@
 package consumer_app.db;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import consumer_app.db.models.ResultModel;
 
 import java.sql.*;
@@ -21,27 +23,8 @@ public class MySQLConnector implements AutoCloseable {
         }
     }
 
-    public boolean insertResultModel(ResultModel model) {
-        try {
-            PreparedStatement statement = connection.prepareStatement("INSERT INTO `results`.`prime_numbers` (`value`, `results`, `queue_id`, `create_time`) VALUES (?, ?, ?, ?);");
-
-            statement.setString(1, model.getValue());
-            statement.setString(2, model.getPrimeNumbers());
-            statement.setString(3, model.getQueueId());
-            statement.setTimestamp(4, new Timestamp(new java.util.Date().getTime()));
-
-            return statement.execute();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return false;
-    }
-
     public List<ResultModel> getResultByValue (String value) {
-        try {
-            PreparedStatement statement = getQueryStatement("SELECT * FROM `prime_numbers` WHERE `value` = ? ;");
+        try (PreparedStatement statement = getQueryStatement("SELECT * FROM `prime_numbers` WHERE `value` = ? ;")) {
             statement.setString(1, value);
 
             ResultSet resultSet = statement.executeQuery();
@@ -55,9 +38,24 @@ public class MySQLConnector implements AutoCloseable {
         return null;
     }
 
+    public boolean updateResultModel (ResultModel model) {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "UPDATE `results`.`prime_numbers` SET `value` = ?, `results` = ? WHERE `id` = ?;")) {
+
+            statement.setString(1, model.getValue());
+            statement.setString(2, new Gson().toJson(model.getPrimeNumbers(), new TypeToken<List<Integer>>(){}.getType()));
+            statement.setInt(3, model.getId());
+
+            return statement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
     public ResultModel getResultById(int id) {
-        try {
-            PreparedStatement statement = getQueryStatement("SELECT * FROM `prime_numbers` WHERE `id` = ? ;");
+        try (PreparedStatement statement = getQueryStatement("SELECT * FROM `prime_numbers` WHERE `id` = ? ;")) {
             statement.setInt(1, id);
 
             ResultSet resultSet = statement.executeQuery();
@@ -90,9 +88,8 @@ public class MySQLConnector implements AutoCloseable {
 
         model.setId(resultSet.getInt(1));
         model.setValue(resultSet.getString(2));
-        model.setPrimeNumbers(resultSet.getString(3));
-        model.setQueueId(resultSet.getString(4));
-        model.setCreateTime(new Date(resultSet.getTimestamp(5).getTime()));
+        model.setPrimeNumbers(new Gson().fromJson(resultSet.getString(3), new TypeToken<List<Integer>>(){}.getType()));
+        model.setCreateTime(new Date(resultSet.getTimestamp(4).getTime()));
 
         return model;
     }

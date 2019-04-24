@@ -8,7 +8,6 @@ import consumer_app.db.models.ResultModel;
 import consumer_app.prime_numbers.PrimesSearchFactory;
 import consumer_app.prime_numbers.strategies_context.PrimesSearch;
 
-import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.TextMessage;
 import java.util.List;
@@ -17,23 +16,21 @@ public class ValuesMessagesListener implements Consumer.MessageListener {
 
     @Override
     public void onMessageReceived(Message message) {
-        try {
-            processReceivedMessage(message);
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
+        processReceivedMessage(message);
     }
 
-    private void processReceivedMessage(Message message) throws JMSException {
+    private void processReceivedMessage(Message message) {
         Integer value = getMessageValue(message);
         if (value != null) {
-            List<Integer> primeNumbers = getPrimeNumbers(value);
 
-            String queueId = message.getJMSMessageID();
+            ResultModel model = getResultModelById(value);
+            if (model != null) {
 
-            ResultModel model = createModel(value, numbersListToString(primeNumbers, ", "), queueId);
+                List<Integer> primeNumbers = getPrimeNumbers(Integer.parseInt(model.getValue()));
+                model.setPrimeNumbers(primeNumbers);
 
-            insertDataToDatabase(model);
+                addResultToRequestedValue(model);
+            }
         }
     }
 
@@ -54,36 +51,25 @@ public class ValuesMessagesListener implements Consumer.MessageListener {
         return null;
     }
 
+    private ResultModel getResultModelById(int id) {
+        try (MySQLConnector connector = new MySQLConnector(Constants.DB_USER, Constants.DB_PASSWORD)) {
+            return connector.getResultById(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     @NotNull
     private List<Integer> getPrimeNumbers(int value) {
         PrimesSearch primesSearch = PrimesSearchFactory.simpleSearchAlgorithm();
         return primesSearch.getPrimeNumbers(value);
     }
 
-    private String numbersListToString(List<Integer> numbers, String separator) {
-        return numbers.stream()
-                .map(String::valueOf)
-                .reduce("", (v1, v2) -> v1.isEmpty() ? v1 + v2 : v1 + separator + v2);
-    }
-
-    private ResultModel createModel (int value, String primeNumbersLine, String queueId) {
-        ResultModel model = new ResultModel();
-
-        model.setValue(String.valueOf(value));
-        model.setPrimeNumbers(primeNumbersLine);
-        model.setQueueId(queueId);
-
-        return model;
-    }
-
-    private void insertDataToDatabase(ResultModel resultModel) {
-        try {
-            try (MySQLConnector connector = new MySQLConnector(Constants.DB_USER, Constants.DB_PASSWORD)) {
-                List<ResultModel> resultModels = connector.getResultByValue(resultModel.getValue());
-                if (resultModels != null && resultModels.isEmpty()) {
-                    connector.insertResultModel(resultModel);
-                }
-            }
+    private void addResultToRequestedValue(ResultModel resultModel) {
+        try (MySQLConnector connector = new MySQLConnector(Constants.DB_USER, Constants.DB_PASSWORD)) {
+            connector.updateResultModel(resultModel);
 
         } catch (Exception e) {
             e.printStackTrace();

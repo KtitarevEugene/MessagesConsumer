@@ -1,13 +1,13 @@
 package consumer_app.db.models;
 
 import java.util.Date;
+import java.util.List;
 
 public class ResultModel {
 
     private int id;
     private String value;
-    private String primeNumbers;
-    private String queueId;
+    private List<Integer> primeNumbers;
     private Date createTime;
 
     public int getId() {
@@ -26,20 +26,12 @@ public class ResultModel {
         this.value = value;
     }
 
-    public String getPrimeNumbers() {
+    public List<Integer> getPrimeNumbers() {
         return primeNumbers;
     }
 
-    public void setPrimeNumbers(String primeNumbers) {
+    public void setPrimeNumbers(List<Integer> primeNumbers) {
         this.primeNumbers = primeNumbers;
-    }
-
-    public String getQueueId() {
-        return queueId;
-    }
-
-    public void setQueueId(String queueId) {
-        this.queueId = queueId;
     }
 
     public Date getCreateTime() {
