@@ -60,7 +60,8 @@ public class MySQLConnector implements AutoCloseable {
 
             ResultSet resultSet = statement.executeQuery();
 
-            return fetchModelsList(resultSet).get(0);
+            List<ResultModel> models = fetchModelsList(resultSet);
+            return !models.isEmpty() ? models.get(0) : null;
 
         } catch (SQLException e) {
             e.printStackTrace();
