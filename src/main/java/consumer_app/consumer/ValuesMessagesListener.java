@@ -3,16 +3,26 @@ package consumer_app.consumer;
 import com.sun.istack.NotNull;
 import com.sun.istack.Nullable;
 import consumer_app.common.Constants;
-import consumer_app.db.MySQLConnector;
-import consumer_app.db.models.ResultModel;
+import consumer_app.repository.DataRepository;
+import consumer_app.repository.cache.cache_managers.MemcachedManager;
+import consumer_app.repository.db.db_managers.MySQLConnectorManager;
 import consumer_app.prime_numbers.PrimesSearchFactory;
 import consumer_app.prime_numbers.strategies_context.PrimesSearch;
+import web_app.repository.db.db_models.ResultModel;
 
 import javax.jms.Message;
 import javax.jms.TextMessage;
 import java.util.List;
 
 public class ValuesMessagesListener implements Consumer.MessageListener {
+
+    private DataRepository dataRepository;
+
+    public ValuesMessagesListener() {
+        dataRepository = new DataRepository(
+                new MySQLConnectorManager(Constants.DB_USER, Constants.DB_PASSWORD),
+                new MemcachedManager("localhost", 11211));
+    }
 
     @Override
     public void onMessageReceived(Message message) {
@@ -52,13 +62,7 @@ public class ValuesMessagesListener implements Consumer.MessageListener {
     }
 
     private ResultModel getResultModelById(int id) {
-        try (MySQLConnector connector = new MySQLConnector(Constants.DB_USER, Constants.DB_PASSWORD)) {
-            return connector.getResultById(id);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return null;
+        return dataRepository.getResultById(id);
     }
 
     @NotNull
@@ -68,11 +72,6 @@ public class ValuesMessagesListener implements Consumer.MessageListener {
     }
 
     private void addResultToRequestedValue(ResultModel resultModel) {
-        try (MySQLConnector connector = new MySQLConnector(Constants.DB_USER, Constants.DB_PASSWORD)) {
-            connector.updateResultModel(resultModel);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        dataRepository.updateResultModel(resultModel);
     }
 }

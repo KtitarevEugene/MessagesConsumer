@@ -1,15 +1,15 @@
-package consumer_app.db;
+package consumer_app.repository.db.db_connectors;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import consumer_app.db.models.ResultModel;
+import web_app.repository.db.db_models.ResultModel;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class MySQLConnector implements AutoCloseable {
+public class MySQLConnector implements Connector {
 
     private static final String CONNECTION_URL = "jdbc:mysql://localhost:3306/results?useSSL=false";
     private Connection connection;
@@ -23,6 +23,7 @@ public class MySQLConnector implements AutoCloseable {
         }
     }
 
+    @Override
     public List<ResultModel> getResultByValue (String value) {
         try (PreparedStatement statement = getQueryStatement("SELECT * FROM `prime_numbers` WHERE `value` = ? ;")) {
             statement.setString(1, value);
@@ -38,6 +39,7 @@ public class MySQLConnector implements AutoCloseable {
         return null;
     }
 
+    @Override
     public boolean updateResultModel (ResultModel model) {
         try (PreparedStatement statement = connection.prepareStatement(
                 "UPDATE `results`.`prime_numbers` SET `value` = ?, `results` = ? WHERE `id` = ?;")) {
@@ -54,6 +56,7 @@ public class MySQLConnector implements AutoCloseable {
         return false;
     }
 
+    @Override
     public ResultModel getResultById(int id) {
         try (PreparedStatement statement = getQueryStatement("SELECT * FROM `prime_numbers` WHERE `id` = ? ;")) {
             statement.setInt(1, id);
