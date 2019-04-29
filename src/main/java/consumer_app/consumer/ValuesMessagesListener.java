@@ -13,15 +13,23 @@ import web_app.repository.db.db_models.ResultModel;
 import javax.jms.Message;
 import javax.jms.TextMessage;
 import java.util.List;
+import java.util.Properties;
 
 public class ValuesMessagesListener implements Consumer.MessageListener {
 
     private DataRepository dataRepository;
 
-    public ValuesMessagesListener() {
+    public ValuesMessagesListener(Properties properties) {
+        MemcachedManager memcachedManager = new MemcachedManager.Builder()
+                .setHost(properties.getProperty(Constants.CACHE_HOST))
+                .setPort(Integer.parseInt(properties.getProperty(Constants.CACHE_PORT)))
+                .setOperationTimeoutMillis(Integer.parseInt(properties.getProperty(Constants.CACHE_TIMEOUT)))
+                .setExpirationTimeMillis(Integer.parseInt(properties.getProperty(Constants.CACHE_EXPIRATION_TIME)))
+                .build();
+
         dataRepository = new DataRepository(
-                new MySQLConnectorManager(Constants.DB_USER, Constants.DB_PASSWORD),
-                new MemcachedManager("localhost", 11211));
+                new MySQLConnectorManager(properties),
+                memcachedManager);
     }
 
     @Override

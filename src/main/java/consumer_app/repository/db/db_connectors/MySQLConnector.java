@@ -11,13 +11,12 @@ import java.util.List;
 
 public class MySQLConnector implements Connector {
 
-    private static final String CONNECTION_URL = "jdbc:mysql://localhost:3306/results?useSSL=false";
     private Connection connection;
 
-    public MySQLConnector(String userName, String password) {
+    public MySQLConnector(String url, String userName, String password) {
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            connection = DriverManager.getConnection(CONNECTION_URL, userName, password);
+            connection = DriverManager.getConnection(url, userName, password);
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }

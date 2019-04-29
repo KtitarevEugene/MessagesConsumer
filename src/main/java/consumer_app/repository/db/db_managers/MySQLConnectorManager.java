@@ -1,21 +1,53 @@
 package consumer_app.repository.db.db_managers;
 
+import consumer_app.common.Constants;
 import consumer_app.repository.db.db_connectors.Connector;
 import consumer_app.repository.db.db_connectors.MySQLConnector;
 
+import java.util.Properties;
+
 public class MySQLConnectorManager implements ConnectorManager {
 
-    private String userName;
-    private String password;
+    private String url = "jdbc:mysql://localhost:3306/results";
+    private String userName = "root";
+    private String password = "root";
 
-    public MySQLConnectorManager(String userName, String password) {
+    public MySQLConnectorManager(Properties properties) {
 
+        String connectionStr = getProperty(properties, Constants.JDBC_URL);
+        if (connectionStr != null) {
+            url = connectionStr;
+        }
+
+        String user = getProperty(properties, Constants.JDBC_USER);
+        if (user != null) {
+            userName = user;
+        }
+
+        String pass = getProperty(properties, Constants.JDBC_PASSWORD);
+        if (pass != null) {
+            password = pass;
+        }
+    }
+
+    public MySQLConnectorManager(String url, String userName, String password) {
+
+        this.url = url;
         this.userName = userName;
         this.password = password;
     }
 
+    private String getProperty(Properties properties, String name) {
+        String value = properties.getProperty(name);
+        if (value == null) {
+            System.err.println(String.format("Missing config property '%s'. Used default value", name));
+        }
+
+        return value;
+    }
+
     @Override
     public Connector getConnector() {
-        return new MySQLConnector(userName, password);
+        return new MySQLConnector(url, userName, password);
     }
 }

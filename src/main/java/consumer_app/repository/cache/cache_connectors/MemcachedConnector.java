@@ -12,14 +12,14 @@ public class MemcachedConnector implements CacheConnector {
     private MemcachedClient cacheClient;
     private int expirationTime;
 
-    public MemcachedConnector(String host, int port, int expirationTime) throws IOException {
+    public MemcachedConnector(String host, int port, int expirationTime, int timeout) throws IOException {
 
         this.expirationTime = expirationTime;
 
         ConnectionFactory connectionFactory = new ConnectionFactoryBuilder()
                 .setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
                 .setFailureMode(FailureMode.Redistribute)
-                .setOpTimeout(3600)
+                .setOpTimeout(timeout)
                 .build();
 
         cacheClient = new MemcachedClient(connectionFactory, AddrUtil.getAddresses(String.format("%s:%d", host, port)));
