@@ -1,11 +1,11 @@
 package consumer_app.main;
 
-import com.sun.istack.NotNull;
 import consumer_app.common.Constants;
 import consumer_app.consumer.Consumer;
 import consumer_app.consumer.ValuesMessagesListener;
 import org.ini4j.Ini;
 import org.ini4j.Profile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.jms.JMSException;
 import java.io.*;
@@ -50,6 +50,7 @@ public class Main {
         }
     }
 
+    @NotNull
     private static Properties getConfigProperties() throws IOException {
         String filename = System.getenv(Constants.ENV_VAR_NAME);
         Reader configFileReader = new FileReader(filename);
@@ -66,10 +67,15 @@ public class Main {
         return properties;
     }
 
-    private static void addConfigParams(Ini config, String sectionName, String[] params, Properties properties) {
+    private static void addConfigParams(@NotNull Ini config, String sectionName, @NotNull String[] params, Properties properties) {
         Profile.Section section = config.get(sectionName);
+
         for (String param : params) {
-            properties.setProperty(param, section.get(param));
+            String val = section.get(param);
+
+            if (val != null) {
+                properties.setProperty(param, val);
+            }
         }
     }
 }

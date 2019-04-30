@@ -1,13 +1,16 @@
 package consumer_app.consumer;
 
-import com.sun.istack.NotNull;
-import com.sun.istack.Nullable;
 import consumer_app.common.Constants;
 import consumer_app.repository.DataRepository;
 import consumer_app.repository.cache.cache_managers.MemcachedManager;
 import consumer_app.repository.db.db_managers.MySQLConnectorManager;
 import consumer_app.prime_numbers.PrimesSearchFactory;
 import consumer_app.prime_numbers.strategies_context.PrimesSearch;
+import consumer_app.repository.repository_types.CachedRepository;
+import consumer_app.repository.repository_types.NonCachedRepository;
+import consumer_app.repository.repository_types.Repository;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import web_app.repository.db.db_models.ResultModel;
 
 import javax.jms.Message;
@@ -19,17 +22,31 @@ public class ValuesMessagesListener implements Consumer.MessageListener {
 
     private DataRepository dataRepository;
 
-    public ValuesMessagesListener(Properties properties) {
-        MemcachedManager memcachedManager = new MemcachedManager.Builder()
-                .setHost(properties.getProperty(Constants.CACHE_HOST))
-                .setPort(Integer.parseInt(properties.getProperty(Constants.CACHE_PORT)))
-                .setOperationTimeoutMillis(Integer.parseInt(properties.getProperty(Constants.CACHE_TIMEOUT)))
-                .setExpirationTimeMillis(Integer.parseInt(properties.getProperty(Constants.CACHE_EXPIRATION_TIME)))
-                .build();
+    public ValuesMessagesListener(@NotNull Properties properties) {
 
-        dataRepository = new DataRepository(
-                new MySQLConnectorManager(properties),
-                memcachedManager);
+        Repository repositoryType;
+
+        String useCache = properties.getProperty(Constants.CACHE_USE_CACHE);
+
+        if (useCache != null && useCache.equalsIgnoreCase(Constants.USE_CACHE_VALUE)) {
+            MemcachedManager memcachedManager = new MemcachedManager.Builder()
+                    .setHost(properties.getProperty(Constants.CACHE_HOST))
+                    .setPort(Integer.parseInt(properties.getProperty(Constants.CACHE_PORT)))
+                    .setOperationTimeoutMillis(Integer.parseInt(properties.getProperty(Constants.CACHE_TIMEOUT)))
+                    .setExpirationTimeMillis(Integer.parseInt(properties.getProperty(Constants.CACHE_EXPIRATION_TIME)))
+                    .build();
+
+            repositoryType = new CachedRepository(
+                    new MySQLConnectorManager(properties),
+                    memcachedManager);
+        } else {
+            repositoryType = new NonCachedRepository(
+                    new MySQLConnectorManager(properties));
+
+        }
+
+        dataRepository = new DataRepository();
+        dataRepository.setRepositoryType(repositoryType);
     }
 
     @Override
