@@ -11,6 +11,8 @@ import consumer_app.repository.repository_types.NonCachedRepository;
 import consumer_app.repository.repository_types.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import web_app.repository.db.db_models.ResultModel;
 
 import javax.jms.Message;
@@ -19,6 +21,8 @@ import java.util.List;
 import java.util.Properties;
 
 public class ValuesMessagesListener implements Consumer.MessageListener {
+
+    private final Logger logger = LoggerFactory.getLogger(ValuesMessagesListener.class);
 
     private DataRepository dataRepository;
 
@@ -80,7 +84,7 @@ public class ValuesMessagesListener implements Consumer.MessageListener {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
 
         return null;

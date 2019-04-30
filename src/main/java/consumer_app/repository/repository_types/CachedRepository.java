@@ -10,12 +10,16 @@ import consumer_app.repository.exceptions.NoDataInDBException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import web_app.repository.db.db_models.ResultModel;
 
 import java.io.IOException;
 import java.util.List;
 
 public class CachedRepository implements Repository {
+
+    private final Logger logger = LoggerFactory.getLogger(CachedRepository.class);
 
     private static final String VALUE_KEY = "VALUE_PREFIX_KEY_%s";
 
@@ -34,7 +38,7 @@ public class CachedRepository implements Repository {
             connector.updateResultModel(model);
             deleteModelInCache(model.getId());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
 
         return false;
@@ -45,20 +49,28 @@ public class CachedRepository implements Repository {
     public List<ResultModel> getResultByValue (String value) {
         List<ResultModel> resultModels = null;
         try {
+            logger.info("Searching for result for value {} in cache...", value);
             return retrieveFromCache(value);
         } catch (NoDataInCacheException e) {
+            logger.warn("Result in cache not found.");
             try {
+                logger.info("Getting result from db...");
                 resultModels = retrieveFromDatabase(value);
+
+                logger.info("Done. Saving result to cache.");
                 putModelsListToCache(value, resultModels);
-            } catch (NoDataInDBException | CacheConnectionException ex ) {
-                ex.printStackTrace();
+            } catch (NoDataInDBException ex ) {
+                logger.warn("Result for value {} not found", value);
+            } catch (CacheConnectionException ex) {
+                logger.error("Error has happened during connection to cache.", ex);
             }
         } catch (CacheConnectionException e) {
-            e.printStackTrace();
+            logger.warn("Error has happened during connection to cache.");
             try {
+                logger.info("Getting data from db...");
                 resultModels = retrieveFromDatabase(value);
             } catch (NoDataInDBException ex ) {
-                ex.printStackTrace();
+                logger.warn("Result for value {} not found", value);
             }
         }
 
@@ -70,20 +82,28 @@ public class CachedRepository implements Repository {
     public ResultModel getResultById(int id) {
         ResultModel resultModel = null;
         try {
+            logger.info("Getting for result by id = {} in cache...", id);
             return retrieveFromCache(id);
         } catch (NoDataInCacheException e) {
+            logger.warn("Result in cache not found.");
             try {
+                logger.info("Getting result from db...");
                 resultModel = retrieveFromDatabase(id);
+
+                logger.info("Done. Saving result to cache.");
                 putModelToCache(id, resultModel);
-            } catch (NoDataInDBException | CacheConnectionException ex ) {
-                ex.printStackTrace();
+            } catch (NoDataInDBException ex) {
+                logger.warn("Result with id = {} not found", id);
+            } catch ( CacheConnectionException ex ) {
+                logger.error("Error has happened during connection to cache.", ex);
             }
         } catch (CacheConnectionException e) {
-            e.printStackTrace();
+            logger.warn("Error has happened during connection to cache.");
             try {
+                logger.info("Getting data from db...");
                 resultModel = retrieveFromDatabase(id);
             } catch (NoDataInDBException ex ) {
-                ex.printStackTrace();
+                logger.warn("Result with id = {} not found", id);
             }
         }
 
@@ -95,7 +115,7 @@ public class CachedRepository implements Repository {
         try (Connector connector = connectorManager.getConnector()) {
             return connector.getResultById(id);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
         }
 
         throw new NoDataInDBException();
@@ -106,7 +126,7 @@ public class CachedRepository implements Repository {
         try (Connector connector = connectorManager.getConnector()) {
             return connector.getResultByValue(value);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
         }
 
         throw new NoDataInDBException();
@@ -117,7 +137,7 @@ public class CachedRepository implements Repository {
         try (CacheConnector cacheConnector = cacheManager.getCacheConnector()) {
             return cacheConnector.getResultModelList(String.format(VALUE_KEY, value));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
             if (e instanceof IOException) {
                 throw new CacheConnectionException();
             }
@@ -131,7 +151,7 @@ public class CachedRepository implements Repository {
         try (CacheConnector cacheConnector = cacheManager.getCacheConnector()) {
             return cacheConnector.getResultModel(id);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
             if (e instanceof IOException) {
                 throw new CacheConnectionException();
             }
@@ -144,7 +164,7 @@ public class CachedRepository implements Repository {
         try (CacheConnector cacheConnector = cacheManager.getCacheConnector()) {
             cacheConnector.addResultModel(id, model);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
             throw new CacheConnectionException();
         }
     }
@@ -158,7 +178,7 @@ public class CachedRepository implements Repository {
                 cacheConnector.addResultModel(model.getId(), model);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
             throw new CacheConnectionException();
         }
     }
@@ -167,7 +187,7 @@ public class CachedRepository implements Repository {
         try (CacheConnector cacheConnector = cacheManager.getCacheConnector()) {
             cacheConnector.deleteResultModel(id);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 }

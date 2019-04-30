@@ -3,10 +3,14 @@ package consumer_app.repository.db.db_managers;
 import consumer_app.common.Constants;
 import consumer_app.repository.db.db_connectors.Connector;
 import consumer_app.repository.db.db_connectors.MySQLConnector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
 public class MySQLConnectorManager implements ConnectorManager {
+
+    private final Logger logger = LoggerFactory.getLogger(MySQLConnectorManager.class);
 
     private String url = "jdbc:mysql://localhost:3306/results";
     private String userName = "root";
@@ -40,7 +44,7 @@ public class MySQLConnectorManager implements ConnectorManager {
     private String getProperty(Properties properties, String name) {
         String value = properties.getProperty(name);
         if (value == null) {
-            System.err.println(String.format("Missing config property '%s'. Used default value", name));
+            logger.warn("Missing config property '{}'. Used default value.", name);
         }
 
         return value;

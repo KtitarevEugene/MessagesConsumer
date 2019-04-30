@@ -11,7 +11,7 @@ public class Constants {
 
     public static final String ACTIVE_MQ_CFG = "acivemq_cfg";
     public static final String ACTIVE_MQ_BROKER_URL = "broker_url";
-    public static final String ACTIVE_MQ_CLIENT_ID = "client_id";
+    public static final String ACTIVE_MQ_CONSUMER_ID = "consumer_id";
     public static final String ACTIVE_MQ_QUEUE_NAME = "queue_name";
 
     public static final String CACHE_CFG = "cache_cfg";

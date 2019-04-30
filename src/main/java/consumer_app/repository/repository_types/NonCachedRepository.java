@@ -3,11 +3,15 @@ package consumer_app.repository.repository_types;
 import consumer_app.repository.db.db_connectors.Connector;
 import consumer_app.repository.db.db_managers.ConnectorManager;
 import consumer_app.repository.exceptions.NoDataInDBException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import web_app.repository.db.db_models.ResultModel;
 
 import java.util.List;
 
 public class NonCachedRepository implements Repository {
+
+    private Logger logger = LoggerFactory.getLogger(NonCachedRepository.class);
 
     private ConnectorManager connectorManager;
 
@@ -18,9 +22,10 @@ public class NonCachedRepository implements Repository {
     @Override
     public boolean updateResultModel (ResultModel model) {
         try (Connector connector = connectorManager.getConnector()) {
-            connector.updateResultModel(model);
+            logger.info("Updating result in db...");
+            return connector.updateResultModel(model);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn("Error has happened during attempt to update result.", e);
         }
 
         return false;
@@ -30,9 +35,10 @@ public class NonCachedRepository implements Repository {
     public List<ResultModel> getResultByValue (String value) {
         List<ResultModel> resultModels = null;
         try {
+            logger.info("Getting result from db...");
             resultModels = retrieveFromDatabase(value);
         } catch (NoDataInDBException ex) {
-            ex.printStackTrace();
+            logger.warn("Result for value {} not found", value);
         }
 
         return resultModels;
@@ -42,9 +48,10 @@ public class NonCachedRepository implements Repository {
     public ResultModel getResultById(int id) {
         ResultModel resultModel = null;
         try {
+            logger.info("Getting result with id = {} from db...", id);
             resultModel = retrieveFromDatabase(id);
         } catch (NoDataInDBException ex) {
-            ex.printStackTrace();
+            logger.warn("Result with id = {} not found", id);
         }
 
         return resultModel;
@@ -54,7 +61,7 @@ public class NonCachedRepository implements Repository {
         try (Connector connector = connectorManager.getConnector()) {
             return connector.getResultById(id);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
         }
 
         throw new NoDataInDBException();
@@ -64,7 +71,7 @@ public class NonCachedRepository implements Repository {
         try (Connector connector = connectorManager.getConnector()) {
             return connector.getResultByValue(value);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
         }
 
         throw new NoDataInDBException();

@@ -2,6 +2,8 @@ package consumer_app.repository.db.db_connectors;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import web_app.repository.db.db_models.ResultModel;
 
 import java.sql.*;
@@ -11,14 +13,18 @@ import java.util.List;
 
 public class MySQLConnector implements Connector {
 
+    private final Logger logger = LoggerFactory.getLogger(MySQLConnector.class);
+
     private Connection connection;
 
     public MySQLConnector(String url, String userName, String password) {
         try {
             Class.forName("com.mysql.jdbc.Driver");
             connection = DriverManager.getConnection(url, userName, password);
-        } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            logger.error("Class 'com.mysql.jdbc.Driver' not found.", e);
+        } catch (SQLException e) {
+            logger.error("SQL exception has been thrown.", e);
         }
     }
 
@@ -32,7 +38,7 @@ public class MySQLConnector implements Connector {
             return fetchModelsList(resultSet);
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("SQL exception has been thrown.", e);
         }
 
         return null;
@@ -49,7 +55,7 @@ public class MySQLConnector implements Connector {
 
             return statement.execute();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("SQL exception has been thrown.", e);
         }
 
         return false;
@@ -66,7 +72,7 @@ public class MySQLConnector implements Connector {
             return !models.isEmpty() ? models.get(0) : null;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("SQL exception has been thrown.", e);
         }
 
         return null;
