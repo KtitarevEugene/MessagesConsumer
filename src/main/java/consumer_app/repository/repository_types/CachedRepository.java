@@ -57,8 +57,10 @@ public class CachedRepository implements Repository {
                 logger.info("Getting result from db...");
                 resultModels = retrieveFromDatabase(value);
 
-                logger.info("Done. Saving result to cache.");
-                putModelsListToCache(value, resultModels);
+                if (!resultModels.isEmpty()) {
+                    logger.info("Done. Saving result to cache.");
+                    putModelsListToCache(value, resultModels);
+                }
             } catch (NoDataInDBException ex ) {
                 logger.warn("Result for value {} not found", value);
             } catch (CacheConnectionException ex) {
@@ -113,7 +115,10 @@ public class CachedRepository implements Repository {
     @NotNull
     private ResultModel retrieveFromDatabase(int id) throws NoDataInDBException {
         try (Connector connector = connectorManager.getConnector()) {
-            return connector.getResultById(id);
+            ResultModel model = connector.getResultById(id);
+            if (model != null) {
+                return model;
+            }
         } catch (Exception e) {
             logger.warn(e.getMessage());
         }
@@ -124,7 +129,10 @@ public class CachedRepository implements Repository {
     @NotNull
     private List<ResultModel> retrieveFromDatabase(String value) throws NoDataInDBException {
         try (Connector connector = connectorManager.getConnector()) {
-            return connector.getResultByValue(value);
+            List<ResultModel> resultModels = connector.getResultByValue(value);
+            if (resultModels != null) {
+                return resultModels;
+            }
         } catch (Exception e) {
             logger.warn(e.getMessage());
         }
@@ -135,7 +143,10 @@ public class CachedRepository implements Repository {
     @NotNull
     private List<ResultModel> retrieveFromCache(String value) throws CacheConnectionException, NoDataInCacheException {
         try (CacheConnector cacheConnector = cacheManager.getCacheConnector()) {
-            return cacheConnector.getResultModelList(String.format(VALUE_KEY, value));
+            List<ResultModel> resultModels = cacheConnector.getResultModelList(String.format(VALUE_KEY, value));
+            if (resultModels != null) {
+                return resultModels;
+            }
         } catch (Exception e) {
             logger.warn(e.getMessage());
             if (e instanceof IOException) {
@@ -149,7 +160,10 @@ public class CachedRepository implements Repository {
     @NotNull
     private ResultModel retrieveFromCache(int id) throws NoDataInCacheException, CacheConnectionException {
         try (CacheConnector cacheConnector = cacheManager.getCacheConnector()) {
-            return cacheConnector.getResultModel(id);
+            ResultModel model = cacheConnector.getResultModel(id);
+            if (model != null) {
+                return model;
+            }
         } catch (Exception e) {
             logger.warn(e.getMessage());
             if (e instanceof IOException) {

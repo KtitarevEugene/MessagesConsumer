@@ -3,6 +3,7 @@ package consumer_app.repository.repository_types;
 import consumer_app.repository.db.db_connectors.Connector;
 import consumer_app.repository.db.db_managers.ConnectorManager;
 import consumer_app.repository.exceptions.NoDataInDBException;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import web_app.repository.db.db_models.ResultModel;
@@ -57,9 +58,13 @@ public class NonCachedRepository implements Repository {
         return resultModel;
     }
 
+    @NotNull
     private ResultModel retrieveFromDatabase(int id) throws NoDataInDBException {
         try (Connector connector = connectorManager.getConnector()) {
-            return connector.getResultById(id);
+            ResultModel resultModel = connector.getResultById(id);
+            if (resultModel != null) {
+                return resultModel;
+            }
         } catch (Exception e) {
             logger.warn(e.getMessage());
         }
@@ -67,9 +72,13 @@ public class NonCachedRepository implements Repository {
         throw new NoDataInDBException();
     }
 
+    @NotNull
     private List<ResultModel> retrieveFromDatabase(String value) throws NoDataInDBException {
         try (Connector connector = connectorManager.getConnector()) {
-            return connector.getResultByValue(value);
+            List<ResultModel> resultModels = connector.getResultByValue(value);
+            if (resultModels != null) {
+                return resultModels;
+            }
         } catch (Exception e) {
             logger.warn(e.getMessage());
         }

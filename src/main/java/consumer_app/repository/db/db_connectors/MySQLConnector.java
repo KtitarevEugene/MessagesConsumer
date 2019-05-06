@@ -33,9 +33,10 @@ public class MySQLConnector implements Connector {
         try (PreparedStatement statement = getQueryStatement("SELECT * FROM `prime_numbers` WHERE `value` = ? ;")) {
             statement.setString(1, value);
 
-            ResultSet resultSet = statement.executeQuery();
+            try (ResultSet resultSet = statement.executeQuery()) {
 
-            return fetchModelsList(resultSet);
+                return fetchModelsList(resultSet);
+            }
 
         } catch (SQLException e) {
             logger.error("SQL exception has been thrown.", e);
@@ -66,10 +67,11 @@ public class MySQLConnector implements Connector {
         try (PreparedStatement statement = getQueryStatement("SELECT * FROM `prime_numbers` WHERE `id` = ? ;")) {
             statement.setInt(1, id);
 
-            ResultSet resultSet = statement.executeQuery();
+            try (ResultSet resultSet = statement.executeQuery()) {
 
-            List<ResultModel> models = fetchModelsList(resultSet);
-            return !models.isEmpty() ? models.get(0) : null;
+                List<ResultModel> models = fetchModelsList(resultSet);
+                return !models.isEmpty() ? models.get(0) : null;
+            }
 
         } catch (SQLException e) {
             logger.error("SQL exception has been thrown.", e);
