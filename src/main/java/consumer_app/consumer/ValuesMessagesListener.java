@@ -1,8 +1,11 @@
 package consumer_app.consumer;
 
+import com.mysql.jdbc.Driver;
 import consumer_app.common.Constants;
 import consumer_app.repository.DataRepository;
+import consumer_app.repository.cache.cache_managers.CacheManager;
 import consumer_app.repository.cache.cache_managers.MemcachedManager;
+import consumer_app.repository.db.db_managers.ConnectorManager;
 import consumer_app.repository.db.db_managers.MySQLConnectorManager;
 import consumer_app.prime_numbers.PrimesSearchFactory;
 import consumer_app.prime_numbers.strategies_context.PrimesSearch;
@@ -17,6 +20,8 @@ import web_app.repository.db.db_models.ResultModel;
 
 import javax.jms.Message;
 import javax.jms.TextMessage;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
@@ -26,31 +31,74 @@ public class ValuesMessagesListener implements Consumer.MessageListener {
 
     private DataRepository dataRepository;
 
-    public ValuesMessagesListener(@NotNull Properties properties) {
+    public ValuesMessagesListener(@NotNull Properties properties) throws SQLException {
 
-        Repository repositoryType;
+        Repository repositoryType = getRepositoryType(properties);
+
+        dataRepository = new DataRepository(repositoryType);
+    }
+
+    @NotNull
+    private Repository getRepositoryType(@NotNull Properties properties) throws SQLException {
 
         String useCache = properties.getProperty(Constants.CACHE_USE_CACHE);
 
         if (useCache != null && useCache.equalsIgnoreCase(Constants.USE_CACHE_VALUE)) {
-            MemcachedManager memcachedManager = new MemcachedManager.Builder()
+            CacheManager memcachedManager = new MemcachedManager.Builder()
                     .setHost(properties.getProperty(Constants.CACHE_HOST))
                     .setPort(Integer.parseInt(properties.getProperty(Constants.CACHE_PORT)))
                     .setOperationTimeoutMillis(Integer.parseInt(properties.getProperty(Constants.CACHE_TIMEOUT)))
                     .setExpirationTimeMillis(Integer.parseInt(properties.getProperty(Constants.CACHE_EXPIRATION_TIME)))
                     .build();
 
-            repositoryType = new CachedRepository(
-                    new MySQLConnectorManager(properties),
+            return new CachedRepository(
+                    getConnectorManager(properties),
                     memcachedManager);
-        } else {
-            repositoryType = new NonCachedRepository(
-                    new MySQLConnectorManager(properties));
-
         }
 
-        dataRepository = new DataRepository();
-        dataRepository.setRepositoryType(repositoryType);
+        return new NonCachedRepository(
+                getConnectorManager(properties));
+
+    }
+
+    @NotNull
+    private ConnectorManager getConnectorManager(@NotNull Properties properties) throws SQLException {
+        DriverManager.registerDriver(new Driver());
+
+        MySQLConnectorManager.Builder builder = new MySQLConnectorManager.Builder()
+                .setUrl(properties.getProperty(Constants.JDBC_URL))
+                .setUsername(properties.getProperty(Constants.JDBC_USER))
+                .setPassword(properties.getProperty(Constants.JDBC_PASSWORD))
+                .setConnectionTestQuery(properties.getProperty(Constants.JDBC_CONNECTION_TEXT_QUERY))
+                .setPoolName(properties.getProperty(Constants.JDBC_POOL_NAME));
+        try {
+            builder.setLeakDetectionThreshold(Integer.parseInt(properties.getProperty(Constants.JDBC_LEAK_DETECTION_THRESHOLD)));
+        } catch (NumberFormatException ex) {
+            logger.error("can't set {} parameter, used default value", Constants.JDBC_LEAK_DETECTION_THRESHOLD);
+        }
+
+        try {
+            builder.setMaximumPoolSize(Integer.parseInt(properties.getProperty(Constants.JDBC_MAXIMUM_POOL_SIZE)));
+        } catch (NumberFormatException ex) {
+            logger.error("can't set {} parameter, used default value", Constants.JDBC_MAXIMUM_POOL_SIZE);
+        }
+
+        try {
+            builder.setMinimumIdle(Integer.parseInt(properties.getProperty(Constants.JDBC_MINIMUM_IDLE)));
+        } catch (NumberFormatException ex) {
+            logger.error("can't set {} parameter, used default value", Constants.JDBC_LEAK_DETECTION_THRESHOLD);
+        }
+
+        for (Object obj : properties.keySet()) {
+            if (obj instanceof String) {
+                String key = (String) obj;
+                if (key.startsWith("dataSource.")) {
+                    builder.addSourceProperty(key, properties.getProperty(key));
+                }
+            }
+        }
+
+        return builder.build();
     }
 
     @Override
@@ -58,7 +106,7 @@ public class ValuesMessagesListener implements Consumer.MessageListener {
         processReceivedMessage(message);
     }
 
-    private void processReceivedMessage(Message message) {
+    private void processReceivedMessage(@NotNull Message message) {
         Integer value = getMessageValue(message);
         if (value != null) {
 
@@ -74,7 +122,7 @@ public class ValuesMessagesListener implements Consumer.MessageListener {
     }
 
     @Nullable
-    private Integer getMessageValue(Message message) {
+    private Integer getMessageValue(@NotNull Message message) {
         try {
             if (message instanceof TextMessage) {
                 TextMessage textMessage = (TextMessage) message;

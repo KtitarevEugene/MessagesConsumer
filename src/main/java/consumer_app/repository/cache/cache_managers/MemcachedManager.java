@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public class MemcachedManager implements CacheManager {
 
-    public static class Builder {
+    public static class Builder implements ManagerBuilder {
 
         private String host = "localhost";
         private int port = 11211;
@@ -34,7 +34,7 @@ public class MemcachedManager implements CacheManager {
             return this;
         }
 
-        public MemcachedManager build() {
+        public CacheManager build() {
             return new MemcachedManager(host, port, expirationTime, timeout);
         }
     }

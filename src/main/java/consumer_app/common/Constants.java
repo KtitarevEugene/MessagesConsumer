@@ -5,9 +5,15 @@ public class Constants {
     public static final String ENV_VAR_NAME = "WebCfgPath";
 
     public static final String JDBC_CFG = "jdbc_cfg";
+    public static final String JDBC_DRIVER_CLASS_NAME = "driverClassName";
     public static final String JDBC_URL = "url";
     public static final String JDBC_USER = "user";
     public static final String JDBC_PASSWORD = "password";
+    public static final String JDBC_MAXIMUM_POOL_SIZE = "maximumPoolSize";
+    public static final String JDBC_MINIMUM_IDLE = "minimumIdle";
+    public static final String JDBC_POOL_NAME = "poolName";
+    public static final String JDBC_CONNECTION_TEXT_QUERY = "connectionTestQuery";
+    public static final String JDBC_LEAK_DETECTION_THRESHOLD = "leakDetectionThreshold";
 
     public static final String ACTIVE_MQ_CFG = "acivemq_cfg";
     public static final String ACTIVE_MQ_BROKER_URL = "broker_url";

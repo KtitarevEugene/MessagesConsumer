@@ -20,4 +20,15 @@ public class Utils {
             }
         }
     }
+
+    public static void addAllConfigParamsFromSection(@NotNull Ini config,
+                                                     @NotNull String sectionName,
+                                                     @NotNull Properties properties) {
+
+        Profile.Section section = config.get(sectionName);
+
+        for (String key : section.keySet()) {
+            properties.setProperty(key, section.get(key));
+        }
+    }
 }

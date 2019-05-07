@@ -17,15 +17,8 @@ public class MySQLConnector implements Connector {
 
     private Connection connection;
 
-    public MySQLConnector(String url, String userName, String password) {
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-            connection = DriverManager.getConnection(url, userName, password);
-        } catch (ClassNotFoundException e) {
-            logger.error("Class 'com.mysql.jdbc.Driver' not found.", e);
-        } catch (SQLException e) {
-            logger.error("SQL exception has been thrown.", e);
-        }
+    public MySQLConnector(Connection connection) {
+        this.connection = connection;
     }
 
     @Override
