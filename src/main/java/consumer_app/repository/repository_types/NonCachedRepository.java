@@ -22,7 +22,7 @@ public class NonCachedRepository implements Repository {
 
     @Override
     public boolean updateResultModel (ResultModel model) {
-        try (Connector connector = connectorManager.getConnector()) {
+        try (Connector connector = connectorManager.establishConnection()) {
             logger.info("Updating result in db...");
             return connector.updateResultModel(model);
         } catch (Exception e) {
@@ -60,7 +60,7 @@ public class NonCachedRepository implements Repository {
 
     @NotNull
     private ResultModel retrieveFromDatabase(int id) throws NoDataInDBException {
-        try (Connector connector = connectorManager.getConnector()) {
+        try (Connector connector = connectorManager.establishConnection()) {
             ResultModel resultModel = connector.getResultById(id);
             if (resultModel != null) {
                 return resultModel;
@@ -74,7 +74,7 @@ public class NonCachedRepository implements Repository {
 
     @NotNull
     private List<ResultModel> retrieveFromDatabase(String value) throws NoDataInDBException {
-        try (Connector connector = connectorManager.getConnector()) {
+        try (Connector connector = connectorManager.establishConnection()) {
             List<ResultModel> resultModels = connector.getResultByValue(value);
             if (resultModels != null) {
                 return resultModels;

@@ -2,6 +2,7 @@ package consumer_app.repository.db.db_connectors;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import web_app.repository.db.db_models.ResultModel;
@@ -17,7 +18,8 @@ public class MySQLConnector implements Connector {
 
     private Connection connection;
 
-    public MySQLConnector(Connection connection) {
+    @Override
+    public void setConnection(@NotNull Connection connection) {
         this.connection = connection;
     }
 
