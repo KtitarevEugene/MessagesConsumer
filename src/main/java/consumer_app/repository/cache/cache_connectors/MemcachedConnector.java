@@ -1,18 +1,50 @@
 package consumer_app.repository.cache.cache_connectors;
 
+import org.jetbrains.annotations.NotNull;
 import web_app.repository.db.db_models.ResultModel;
 import net.spy.memcached.*;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 
 public class MemcachedConnector implements CacheConnector {
+
+    static {
+        System.setProperty("net.spy.log.LoggerImpl",
+                "net.spy.memcached.compat.log.SunLogger");
+    }
+
+    public static final String CACHE_LOGGER_NAME = "net.spy.memcached";
+
+    public enum LogLevel {
+        OFF("OFF"),
+        SEVERE("SEVERE"),
+        WARNING("WARNING"),
+        INFO("INFO"),
+        CONFIG("CONFIG"),
+        FINE("FINE"),
+        FINER("FINER"),
+        FINEST("FINEST"),
+        ALL("ALL");
+
+        private String level;
+
+        LogLevel(String level) {
+            this.level = level;
+        }
+
+        @Override
+        public String toString() {
+            return level;
+        }
+    }
 
     private MemcachedClient cacheClient;
     private int expirationTime;
 
-    public MemcachedConnector(String host, int port, int expirationTime, int timeout) throws IOException {
+    public MemcachedConnector(String host, int port, int expirationTime, int timeout, LogLevel logLevel) throws IOException {
 
         this.expirationTime = expirationTime;
 
@@ -23,6 +55,12 @@ public class MemcachedConnector implements CacheConnector {
                 .build();
 
         cacheClient = new MemcachedClient(connectionFactory, AddrUtil.getAddresses(String.format("%s:%d", host, port)));
+        setLogLevel(logLevel);
+    }
+
+    private void setLogLevel(@NotNull LogLevel logLevel) {
+        java.util.logging.Logger.getLogger(CACHE_LOGGER_NAME)
+                .setLevel(Level.parse(logLevel.toString()));
     }
 
     @Override

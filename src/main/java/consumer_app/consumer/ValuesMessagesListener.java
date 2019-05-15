@@ -3,6 +3,7 @@ package consumer_app.consumer;
 import com.mysql.jdbc.Driver;
 import consumer_app.common.Constants;
 import consumer_app.repository.DataRepository;
+import consumer_app.repository.cache.cache_connectors.MemcachedConnector;
 import consumer_app.repository.cache.cache_managers.CacheManager;
 import consumer_app.repository.cache.cache_managers.MemcachedManager;
 import consumer_app.repository.db.db_connectors.MySQLConnector;
@@ -51,6 +52,7 @@ public class ValuesMessagesListener implements Consumer.MessageListener {
                     .setPort(Integer.parseInt(properties.getProperty(Constants.CACHE_PORT)))
                     .setOperationTimeoutMillis(Integer.parseInt(properties.getProperty(Constants.CACHE_TIMEOUT)))
                     .setExpirationTimeMillis(Integer.parseInt(properties.getProperty(Constants.CACHE_EXPIRATION_TIME)))
+                    .setLogLevel(getLogLevelValue(properties.getProperty(Constants.CACHE_LOG_LEVEL)))
                     .build();
 
             return new CachedRepository(
@@ -61,6 +63,19 @@ public class ValuesMessagesListener implements Consumer.MessageListener {
         return new NonCachedRepository(
                 getConnectorManager(properties));
 
+    }
+
+    private MemcachedConnector.LogLevel getLogLevelValue(String logLevel) {
+
+        MemcachedConnector.LogLevel level = MemcachedConnector.LogLevel.SEVERE;
+
+        try {
+            level = MemcachedConnector.LogLevel.valueOf(logLevel.toUpperCase());
+        } catch (IllegalArgumentException | NullPointerException ex) {
+            logger.error("'log_level' property is wrong or not specified, used default value.");
+        }
+
+        return level;
     }
 
     @NotNull
