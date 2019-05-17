@@ -15,6 +15,7 @@ import consumer_app.prime_numbers.strategies_context.PrimesSearch;
 import consumer_app.repository.repository_types.CachedRepository;
 import consumer_app.repository.repository_types.NonCachedRepository;
 import consumer_app.repository.repository_types.Repository;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -41,6 +42,7 @@ public class ValuesMessagesListener implements Consumer.MessageListener {
         dataRepository = new DataRepository(repositoryType);
     }
 
+    @Contract("_ -> new")
     @NotNull
     private Repository getRepositoryType(@NotNull Properties properties) throws SQLException {
 
